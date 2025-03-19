@@ -44,9 +44,6 @@ function createGameBoard() {
         }
     }
 
-    // Remove Later
-    const getGameState = () => gameState;
-
     const printGameState = () => {
         let printString = "";
         for(let i = 0; i < 3; i++) {
@@ -58,7 +55,12 @@ function createGameBoard() {
         }
         console.log(printString)
     }
-    // Returns winner if found, 0 if not
+
+    const makeMove = function (cellX, cellY, player) {
+        gameState[cellX][cellY].setPlayer(player);
+    }
+
+    // Returns winner if found, -1 if not
     const checkForWinner = function() {
        for(let i = 0; i < 3; i++) {
             if (gameState[i][0].getPlayer() === gameState[i][1].getPlayer() && gameState[i][1].getPlayer() === gameState[i][2].getPlayer() && gameState[i][0] !== 0) {
@@ -74,8 +76,34 @@ function createGameBoard() {
         if (gameState[0][2].getPlayer() === gameState[1][1].getPlayer() && gameState[1][1].getPlayer() === gameState[2][0].getPlayer() && gameState[0][0] !== 0) {
             return gameState[0][0].getPlayer();
         }
-        return -1;
+        return 0;
     }
     
-    return { getGameState, printGameState ,checkForWinner };
+    return { makeMove, printGameState, checkForWinner };
+}
+
+function gameHandler() {
+    let playerOne = createPlayer("X", "Player1");
+    let playerTwo = createPlayer("O", "Player2");
+    let activePlayer = playerOne;
+    let gameBoard = createGameBoard();
+
+    const resetGame = function() {
+        gameBoard = createGameBoard();
+        activePlayer = playerOne;
+    }
+
+    const playRound = function(x, y) {
+        console.log(`${activePlayer} moves to [${x}][${y}].`);
+        gameBoard.makeMove(x, y, activePlayer);
+        if (gameBoard.checkForWinner() > 0) {
+            console.log(`${activePlayer.getName()} wins the game!`)
+            resetGame();
+        } else {
+            activePlayer = activePlayer === playerOne ? playerTwo : playerOne;
+            console.log(`${activePlayer.getName()}'s move.`);
+        }
+    }
+
+    return { playRound };
 }
