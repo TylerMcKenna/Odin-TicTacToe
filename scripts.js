@@ -15,7 +15,7 @@ function createCell() {
 }
 
 
-function createPlayer(token, name = "Player") {
+function createPlayer(token, name) {
     let userToken;
     const userName = name;
 
@@ -44,19 +44,22 @@ function createGameBoard() {
         }
     }
 
-    const printGameState = () => {
-        let printString = "";
-        for(let i = 0; i < 3; i++) {
-            printString = `${printString} [`
-            for(let j = 0; j < 3; j++) {
-                printString = `${printString} ${gameState[i][j].getPlayer()},`;
-            }
-            printString = `${printString}] \n`
-        }
-        console.log(printString)
-    }
+    // const printGameState = () => {
+    //     let printString = "";
+    //     for(let i = 0; i < 3; i++) {
+    //         printString = `${printString} [`
+    //         for(let j = 0; j < 3; j++) {
+    //             printString = `${printString} ${gameState[i][j].getPlayer()},`;
+    //         }
+    //         printString = `${printString}] \n`
+    //     }
+    //     console.log(printString)
+    // }
 
     const makeMove = function (cellX, cellY, player) {
+        if ( cellX > 2 || cellY > 2 || gameState[cellX][cellY].getPlayer() !== 0) {
+            return -1;
+        }
         gameState[cellX][cellY].setPlayer(player);
     }
 
@@ -78,13 +81,17 @@ function createGameBoard() {
         }
         return 0;
     }
+
+    const getGameState = () => gameState;
     
-    return { makeMove, printGameState, checkForWinner };
+    return { makeMove, checkForWinner, getGameState };
 }
 
-function gameHandler() {
-    let playerOne = createPlayer("X", "Player1");
-    let playerTwo = createPlayer("O", "Player2");
+
+// Should I use IIFE?
+const gameHandler = (function(playerOne = "Player1", playerTwo = "Player2") {
+    playerOne = createPlayer("X", playerOne);
+    playerTwo = createPlayer("O", playerTwo);
     let activePlayer = playerOne;
     let gameBoard = createGameBoard();
 
@@ -94,16 +101,63 @@ function gameHandler() {
     }
 
     const playRound = function(x, y) {
-        console.log(`${activePlayer} moves to [${x}][${y}].`);
-        gameBoard.makeMove(x, y, activePlayer);
-        if (gameBoard.checkForWinner() > 0) {
-            console.log(`${activePlayer.getName()} wins the game!`)
-            resetGame();
-        } else {
-            activePlayer = activePlayer === playerOne ? playerTwo : playerOne;
-            console.log(`${activePlayer.getName()}'s move.`);
+        if (gameBoard.makeMove(x, y, activePlayer) !== -1) { 
+            console.log(`${activePlayer.getName()} moves to [${x}][${y}].`);
+            if (gameBoard.checkForWinner() > 0) {
+                console.log(`${activePlayer.getName()} wins the game! Game reset.`)
+                resetGame();
+            } else {
+                activePlayer = activePlayer === playerOne ? playerTwo : playerOne;
+                console.log(`${activePlayer.getName()}'s move.`);
+            }
+        } else {      
+            console.log(`Invalid move! Still ${activePlayer.getName()}'s move.`)
         }
     }
 
-    return { playRound };
+    const getActivePlayer = () => activePlayer;
+
+    const getGameState = () => gameBoard.getGameState();
+
+    return { resetGame, playRound, getActivePlayer, getGameState };
+})();
+
+// ALSO IIFE?
+function createScreenController() {
+    const boardDiv = document.querySelector("#board");
+
+    const updateScreen = function() {
+        boardDiv.textContent = "";
+
+        const gameState = gameHandler.getGameState();
+
+        let i = 0, j = 0;
+        gameState.forEach((row) => {
+            row.forEach((cell) => {
+                let button = document.createElement("button");
+                button.textContent = cell.getPlayer();
+                button.dataset.coordinates = `${i},${j}`;
+                boardDiv.appendChild(button);
+                j++;
+            });
+            j = 0;
+            i++
+        });
+    }
+
+    function clickHandler(event) {
+        const coordinates = event.target.dataset.coordinates.split(",");
+        const row = coordinates[0];
+        const column = coordinates[1];
+        gameHandler.playRound(row, column);
+        updateScreen();
+    }
+
+    boardDiv.addEventListener("click", clickHandler);
+
+    updateScreen();
+
+    return { updateScreen }
 }
+
+createScreenController();
