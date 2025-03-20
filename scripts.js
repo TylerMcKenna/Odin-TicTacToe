@@ -123,7 +123,7 @@ const gameHandler = (function(playerOne = "Player1", playerTwo = "Player2") {
 })();
 
 // ALSO IIFE?
-function createScreenController() {
+const screenController = (function() {
     const boardDiv = document.querySelector("#board");
 
     const updateScreen = function() {
@@ -131,33 +131,32 @@ function createScreenController() {
 
         const gameState = gameHandler.getGameState();
 
-        let i = 0, j = 0;
+        let rowVal = 0, colVal = 0;
         gameState.forEach((row) => {
             row.forEach((cell) => {
                 let button = document.createElement("button");
                 button.textContent = cell.getPlayer();
-                button.dataset.coordinates = `${i},${j}`;
+                button.dataset.coordinates = `${rowVal},${colVal}`;
+                button.classList.add("cell");
                 boardDiv.appendChild(button);
-                j++;
+                colVal++;
             });
-            j = 0;
-            i++
+            colVal = 0;
+            rowVal++;
         });
     }
 
     function clickHandler(event) {
-        const coordinates = event.target.dataset.coordinates.split(",");
-        const row = coordinates[0];
-        const column = coordinates[1];
-        gameHandler.playRound(row, column);
-        updateScreen();
+        if (event.target.classList.contains("cell")) {
+            const coordinates = event.target.dataset.coordinates.split(",");
+            const row = coordinates[0];
+            const column = coordinates[1];
+            gameHandler.playRound(row, column);
+            updateScreen();
+        }
     }
 
     boardDiv.addEventListener("click", clickHandler);
 
     updateScreen();
-
-    return { updateScreen }
-}
-
-createScreenController();
+})();
